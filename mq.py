@@ -42,7 +42,7 @@ class MQ(ttk.Frame):
             self.answer_label['text'] = "ERROR: this application needs ffmpeg installed in the system!"
             return
         opts = {}
-        opts['filetypes'] = [('Supported types',("*.mov","*.mp4","*.mpg","*.avi","*.h264","*.mpeg","*.mkv"))]       
+        opts['filetypes'] = [('Supported types',("*.mov","*.mp4","*.mpg","*.avi","*.h264","*.mpeg","*.mkv","*.m4a","*.3gp","*.ogg","*.wmv","*.vob"))]       
         self.moviefile = filedialog.askopenfilename(**opts)
         if self.moviefile != "":
             self.movie_button['text']=os.path.basename(self.moviefile)
@@ -94,7 +94,8 @@ class MQ(ttk.Frame):
             
     def execute(self):
         #Grab the images
-        result=(os.system('ls "'+self.outfolder+'"/img*.jpg'))
+        result=(os.system('ls "'+self.outfolder+'"/img*.jpg')) +\
+                (os.system('ls "'+self.outfolder+'"/img*.tiff'))
         if result==0:
         	answer = mbox.askyesno("Warning","Folder already contains image files, that will be overwritten. Proceed?")
         	if answer==False:
@@ -105,13 +106,14 @@ class MQ(ttk.Frame):
         t1.start() 
         
     def exec_thread(self):
+        format = self.image_formatbox.get()
         fps = float(1/float(self.interval_spin.get()))
         cmd = "ffmpeg -i '"+self.moviefile+"' -vf fps="+\
-            str(fps)+" '"+self.outfolder+"'/img%04d.jpg 2>&1"
+            str(fps)+" '"+self.outfolder+"'/img%04d."+format+" 2>&1"
         try:
             subprocess.check_call(cmd,shell=True)
             self.popup.destroy()
-            cnt = subprocess.check_output('ls "'+self.outfolder+'"/img*.jpg | wc -l', shell=True)
+            cnt = subprocess.check_output('ls "'+self.outfolder+'"/img*.'+format+' | wc -l', shell=True)
             self.answer_label['text'] = "Result: "+\
                 (cnt.decode('ascii').strip())+\
                 " image files have been successfully created in "+self.outfolder
@@ -171,14 +173,21 @@ class MQ(ttk.Frame):
             state='disabled')
         self.images_nrs.grid(column=3, row=3, sticky="e")
         
+        self.box_value=StringVar()
+        self.image_formatbox = ttk.Combobox(self, textvariable=self.box_value,
+              state='readonly', width=4)
+        self.image_formatbox['values'] = ("jpg","tiff")
+        self.image_formatbox.current(0)
+        self.image_formatbox.grid(column=1, row=4, sticky="w")
+        
         self.action_button = ttk.Button(self, text='Grab Images',
                 command=self.execute, state='disabled')
-        self.action_button.grid(column=0, row=4, columnspan=4)
+        self.action_button.grid(column=0, row=5, columnspan=4)
  
         
         self.answer_frame = Frame(self, height=300, background="white")
 
-        self.answer_frame.grid(column=0, row=5, columnspan=4, sticky='nesw')
+        self.answer_frame.grid(column=0, row=6, columnspan=4, sticky='nesw')
  
         self.answer_label = Message(self.answer_frame, text='', justify='center', width=600)
         self.answer_label.grid(column=0, row=0)
@@ -193,6 +202,8 @@ class MQ(ttk.Frame):
         ttk.Label(self, text="Grab a frame each (sec.):").grid(column=0, row=3,
                 sticky='w')
         ttk.Label(self, text="Nr. of images:").grid(column=2, row=3,
+                sticky='w')
+        ttk.Label(self, text="Images format:").grid(column=0, row=4,
                 sticky='w')
 
 
