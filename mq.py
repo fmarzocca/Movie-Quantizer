@@ -94,9 +94,10 @@ class MQ(ttk.Frame):
             
     def execute(self):
         #Grab the images
-        result=(os.system('ls "'+self.outfolder+'"/img*.jpg')) +\
-                (os.system('ls "'+self.outfolder+'"/img*.tiff'))
-        if result==0:
+        format = self.image_formatbox.get()
+        result=(os.system('ls "'+self.outfolder+'"/img*.'+format))
+
+        if result ==0:
         	answer = mbox.askyesno("Warning","Folder already contains image files, that will be overwritten. Proceed?")
         	if answer==False:
         		return
@@ -107,8 +108,12 @@ class MQ(ttk.Frame):
         
     def exec_thread(self):
         format = self.image_formatbox.get()
+        if format == "tiff":
+            pixformat=" -pix_fmt rgb565 " 
+        else: 
+        	pixformat=" "
         fps = float(1/float(self.interval_spin.get()))
-        cmd = "ffmpeg -i '"+self.moviefile+"' -vf fps="+\
+        cmd = "ffmpeg -i '"+self.moviefile+"'"+pixformat+ "-vf fps="+\
             str(fps)+" '"+self.outfolder+"'/img%04d."+format+" 2>&1"
         try:
             subprocess.check_call(cmd,shell=True)
