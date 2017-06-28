@@ -68,7 +68,8 @@ class MQ(ttk.Frame):
 
  	#Get informations and duration of the movie	
     def checkDuration(self):
-        c = os.popen(FFMPEG_BIN+" -i "+"'"+self.moviefile+"'"+" 2>&1 | grep Duration")
+        cmd = FFMPEG_BIN+" -i "+"'"+self.moviefile+"'"+" 2>&1 | grep Duration"
+        c = os.popen(cmd)
         out = c.read()
         self.answer_label['text'] ="Movie info:"+out
         c.close()
@@ -88,6 +89,7 @@ class MQ(ttk.Frame):
             
  		  
     def checkifffmpeg(self):
+        global FFMPEG_BIN
         try:
             devnull = open(os.devnull)
             subprocess.call(['ffmpeg',  '-version'], stderr=subprocess.STDOUT,
@@ -255,5 +257,6 @@ if __name__ == '__main__':
     MQ(root)
     root.resizable(False, False)
     root.createcommand('tkAboutDialog', about_dialog)
-    os.environ['PATH'] += '/usr/local/bin'
+    #os.environ['PATH'] += '/usr/local/bin'
+    os.environ['PATH'] = '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin' + os.environ['PATH']
     root.mainloop()
