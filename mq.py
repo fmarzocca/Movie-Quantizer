@@ -14,8 +14,11 @@ import sys
 import subprocess
 import os
 import threading
+from get_ffmpeg import get_ffmpeg
+
  
 VERSION = '1.0.0'
+FFMPEG_BIN = "ffmpeg"
 
 class MQ(ttk.Frame):
     #The  gui and functions.
@@ -30,7 +33,9 @@ class MQ(ttk.Frame):
         self.movieDuration=0.0
         self.root = parent
         self.init_gui()
- 
+        
+        
+        
     def on_quit(self):
 		#Exits program.
         sys.exit()
@@ -39,7 +44,15 @@ class MQ(ttk.Frame):
     def loadmovie(self):
     	#check if ffmpeg is installed
         if (self.checkifffmpeg()==False):
-            self.answer_label['text'] = "ERROR: this application needs ffmpeg installed in the system!"
+            #self.answer_label['text'] = "ERROR: this application needs ffmpeg installed in the system!"
+            answer = mbox.askyesno("ERROR","This application needs ffmpeg "
+                          "installed in the system!\n\n"
+                          "Do you want to install it?")
+            if answer==True:
+                root.update();
+                self.tryGettingffmpeg()
+                return
+            root.update();
             return
         opts = {}
         opts['filetypes'] = [('Supported types',("*.mov","*.mp4","*.mpg","*.avi","*.h264","*.mpeg","*.mkv","*.m4a","*.3gp","*.ogg","*.wmv","*.vob"))]       
@@ -55,7 +68,7 @@ class MQ(ttk.Frame):
 
  	#Get informations and duration of the movie	
     def checkDuration(self):
-        c = os.popen("ffmpeg -i "+"'"+self.moviefile+"'"+" 2>&1 | grep Duration")
+        c = os.popen(FFMPEG_BIN+" -i "+"'"+self.moviefile+"'"+" 2>&1 | grep Duration")
         out = c.read()
         self.answer_label['text'] ="Movie info:"+out
         c.close()
@@ -79,11 +92,26 @@ class MQ(ttk.Frame):
             devnull = open(os.devnull)
             subprocess.call(['ffmpeg',  '-version'], stderr=subprocess.STDOUT,
                 stdout=devnull)
-        except:
-            return False
+            FFMPEG_BIN = "ffmpeg"
+        except (OSError, ValueError, subprocess.CalledProcessError):
+            try:
+                subprocess.call(['ffmpeg.osx',  '-version'], 
+                        stderr=subprocess.STDOUT,stdout=devnull)
+                FFMPEG_BIN = "ffmpeg.osx"
+            except (OSError, ValueError, subprocess.CalledProcessError):           
+                return False
         return True
 
-        
+    def tryGettingffmpeg(self):
+        self.progLabelText="Downloading ffmpeg. Please wait.."
+        self.progress_win()
+        root.update()
+        t1=threading.Thread(target=get_ffmpeg, args=(self,))
+        t1.start() 
+        FFMPEG_BIN = "ffmpeg.osx"
+
+                
+                  
     def calculate_images(self):
         images = int(float(self.movieDuration)/float(self.interval_spin.get()))
         self.images_nrs['state']='normal'
@@ -102,6 +130,7 @@ class MQ(ttk.Frame):
         	if answer==False:
         		return
         	root.update();
+        self.progLabelText="Processing images. Please wait.."
         self.progress_win()
         t1=threading.Thread(target=self.exec_thread)
         t1.start() 
@@ -113,7 +142,7 @@ class MQ(ttk.Frame):
         else: 
         	pixformat=" "
         fps = float(1/float(self.interval_spin.get()))
-        cmd = "ffmpeg -i '"+self.moviefile+"'"+pixformat+ "-vf fps="+\
+        cmd = FFMPEG_BIN+" -i '"+self.moviefile+"'"+pixformat+ "-vf fps="+\
             str(fps)+" '"+self.outfolder+"'/img%04d."+format+" 2>&1"
         try:
             subprocess.check_call(cmd,shell=True)
@@ -134,7 +163,8 @@ class MQ(ttk.Frame):
         progress_bar = ttk.Progressbar(self.popup,orient='horizontal',
             mode='determinate',takefocus=True, length=400)
         progress_bar.grid(row=1,column=0,sticky="we")
-        ttk.Label(self.popup, text="Processing images. Please wait..").grid(column=0, row=0,
+        
+        self.progLabel=ttk.Label(self.popup, text=self.progLabelText).grid(column=0, row=0,
              sticky="we")
         self.popup.attributes('-topmost',True)
         progress_bar.start(50)
@@ -180,7 +210,7 @@ class MQ(ttk.Frame):
         
         self.box_value=StringVar()
         self.image_formatbox = ttk.Combobox(self, textvariable=self.box_value,
-              state='readonly', width=4)
+              state='readonly', width=4, justify='center')
         self.image_formatbox['values'] = ("jpg","tiff")
         self.image_formatbox.current(0)
         self.image_formatbox.grid(column=1, row=4, sticky="w")
@@ -211,10 +241,10 @@ class MQ(ttk.Frame):
         ttk.Label(self, text="Images format:").grid(column=0, row=4,
                 sticky='w')
 
-
- 
         for child in self.winfo_children():
             child.grid_configure(padx=7, pady=7)
+        
+        
  
 
 def about_dialog():
@@ -224,7 +254,6 @@ if __name__ == '__main__':
     root = tkinter.Tk()
     MQ(root)
     root.resizable(False, False)
-    #root.attributes("-topmost", True)
     root.createcommand('tkAboutDialog', about_dialog)
-    os.environ['PATH'] = '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin' + os.environ['PATH']
+    os.environ['PATH'] += '/usr/local/bin'
     root.mainloop()
