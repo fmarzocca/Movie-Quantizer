@@ -39,12 +39,10 @@ class MQ(ttk.Frame):
     def on_quit(self):
 		#Exits program.
         sys.exit()
-     
-    #Get the movie file    
-    def loadmovie(self):
+
+    def go_nogo(self):
     	#check if ffmpeg is installed
         if (self.checkifffmpeg()==False):
-            #self.answer_label['text'] = "ERROR: this application needs ffmpeg installed in the system!"
             answer = mbox.askyesno("ERROR","This application needs ffmpeg "
                           "installed in the system!\n\n"
                           "Do you want to install it?")
@@ -52,8 +50,12 @@ class MQ(ttk.Frame):
                 root.update();
                 self.tryGettingffmpeg()
                 return
-            root.update();
+            self.on_quit()
             return
+ 
+     
+    #Get the movie file    
+    def loadmovie(self):
         opts = {}
         opts['filetypes'] = [('Supported types',("*.mov","*.mp4","*.mpg","*.avi","*.h264","*.mpeg","*.mkv","*.m4a","*.3gp","*.ogg","*.wmv","*.vob"))]       
         self.moviefile = filedialog.askopenfilename(**opts)
@@ -105,6 +107,7 @@ class MQ(ttk.Frame):
         return True
 
     def tryGettingffmpeg(self):
+        global FFMPEG_BIN
         self.progLabelText="Downloading ffmpeg. Please wait.."
         self.progress_win()
         root.update()
@@ -112,7 +115,7 @@ class MQ(ttk.Frame):
         t1.start() 
         FFMPEG_BIN = "ffmpeg.osx"
 
-                
+                  
                   
     def calculate_images(self):
         images = int(float(self.movieDuration)/float(self.interval_spin.get()))
@@ -158,7 +161,8 @@ class MQ(ttk.Frame):
             self.answer_label['text'] =e.output   
             self.popup.destroy()
             return 
-        
+    
+ 
     
     def progress_win(self):
         self.popup=Toplevel(self)
@@ -245,8 +249,7 @@ class MQ(ttk.Frame):
 
         for child in self.winfo_children():
             child.grid_configure(padx=7, pady=7)
-        
-        
+     
  
 
 def about_dialog():
@@ -254,9 +257,10 @@ def about_dialog():
         
 if __name__ == '__main__':
     root = tkinter.Tk()
-    MQ(root)
+    app=MQ(root)
     root.resizable(False, False)
     root.createcommand('tkAboutDialog', about_dialog)
     #os.environ['PATH'] += '/usr/local/bin'
     os.environ['PATH'] = '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin' + os.environ['PATH']
+    root.after(0, app.go_nogo)
     root.mainloop()
