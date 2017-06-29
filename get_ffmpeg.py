@@ -4,44 +4,47 @@ import os
 import stat
 import tkinter.messagebox as mbox
 
+
 FFMPEG_URL = "https://github.com/imageio/imageio-binaries/raw/master/ffmpeg/ffmpeg-osx-v3.2.4"
 
+
 def get_ffmpeg(mqapp):
-    if internet_on()==False:
+    if internet_on() == False:
         mqapp.popup.destroy()
-        mbox.showinfo("Error!","No internet connection or File not Found")
+        mbox.showinfo("Error!", "No internet connection or File not Found.\n\n"
+                      "Please provide manual installation of ffmpeg.")
         return False
-    #get the file
+    # get the file
     try:
-        urlretrieve(FFMPEG_URL, "/tmp/ffmpeg.osx")  
+        urlretrieve(FFMPEG_URL, "/tmp/ffmpeg.osx")
     except URLError as e:
         mqapp.popup.destroy()
-        mbox.showinfo("Error!",e.reason)
+        mbox.showinfo("Error!", e.reason)
         return False
     except HTTPError as e:
         mqapp.popup.destroy()
-        mbox.showinfo("Error!",e.msg)
-        return False 
-     
-    #move the file
+        mbox.showinfo("Error!", e.msg)
+        return False
+
+    # move the file
     try:
         os.makedirs("/usr/local/bin")
     except:
         pass
     try:
-        os.rename("/tmp/ffmpeg.osx","/usr/local/bin/ffmpeg.osx")
+        os.rename("/tmp/ffmpeg.osx", "/usr/local/bin/ffmpeg.osx")
     except OSError as e:
         mqapp.popup.destroy()
-        mbox.showinfo("Error!",e.output)
+        mbox.showinfo("Error!", e.output)
         return False
-    #make the file executable
+    # make the file executable
     st = os.stat("/usr/local/bin/ffmpeg.osx")
     os.chmod("/usr/local/bin/ffmpeg.osx", st.st_mode | stat.S_IEXEC)
-   
+    mqapp.set_ffmpegversion()
     mqapp.popup.destroy()
-    
 
-# check if we are connected to internet	
+
+# check if we are connected to internet
 def internet_on():
     try:
         urlopen(FFMPEG_URL, timeout=2)
@@ -49,5 +52,4 @@ def internet_on():
     except URLError as err:
         return False
     except HTTPError as e:
-    	return False
-
+        return False
