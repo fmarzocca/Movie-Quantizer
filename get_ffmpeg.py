@@ -28,18 +28,18 @@ def get_ffmpeg(mqapp):
 
     # move the file
     try:
-        os.makedirs("/usr/local/bin")
+        os.makedirs(mqapp.path_OSX)
     except:
         pass
     try:
-        os.rename("/tmp/ffmpeg.osx", "/usr/local/bin/ffmpeg.osx")
+        os.rename("/tmp/ffmpeg.osx", mqapp.path_OSX+"/ffmpeg.osx")
     except OSError as e:
         mqapp.popup.destroy()
         mbox.showinfo("Error!", e.output)
         return False
     # make the file executable
-    st = os.stat("/usr/local/bin/ffmpeg.osx")
-    os.chmod("/usr/local/bin/ffmpeg.osx", st.st_mode | stat.S_IEXEC)
+    st = os.stat(mqapp.path_OSX+"/ffmpeg.osx")
+    os.chmod(mqapp.path_OSX+"/ffmpeg.osx", st.st_mode | stat.S_IEXEC)
     mqapp.set_ffmpegversion()
     mqapp.popup.destroy()
 

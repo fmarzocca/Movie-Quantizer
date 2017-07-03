@@ -34,6 +34,9 @@ class MQ(ttk.Frame):
         self.movieLabeltext.set("<none>")
         self.movieDuration = 0.0
         self.root = parent
+        userDir = os.path.expanduser('~')
+        self.path_OSX = os.path.join(
+            userDir, 'Library', 'Application Support', 'Movie Quantizer')
         self.init_gui()
 
     def on_quit(self):
@@ -71,7 +74,7 @@ class MQ(ttk.Frame):
 
         # Get informations and duration of the movie
     def checkDuration(self):
-        cmd = FFMPEG_BIN + " -i " + "'" + self.moviefile + "'" + " 2>&1 | grep Duration"
+        cmd = "'"+FFMPEG_BIN + "' -i " + "'" + self.moviefile + "'" + " 2>&1 | grep Duration"
         c = os.popen(cmd)
         out = c.read()
         self.answer_label['text'] = "Movie info:" + out
@@ -98,9 +101,9 @@ class MQ(ttk.Frame):
             FFMPEG_BIN = "ffmpeg"
         except (OSError, ValueError, subprocess.CalledProcessError):
             try:
-                subprocess.call(['ffmpeg.osx',  '-version'],
+                subprocess.call([self.path_OSX + '/ffmpeg.osx',  '-version'],
                                 stderr=subprocess.STDOUT, stdout=devnull)
-                FFMPEG_BIN = "ffmpeg.osx"
+                FFMPEG_BIN = self.path_OSX + "/ffmpeg.osx"
             except (OSError, ValueError, subprocess.CalledProcessError):
                 return False
         self.set_ffmpegversion()
@@ -113,7 +116,7 @@ class MQ(ttk.Frame):
         root.update()
         t1 = threading.Thread(target=get_ffmpeg, args=(self,))
         t1.start()
-        FFMPEG_BIN = "ffmpeg.osx"
+        FFMPEG_BIN = self.path_OSX + "/ffmpeg.osx"
 
     def set_ffmpegversion(self):
         cmd = [FFMPEG_BIN, " -version"]
@@ -157,7 +160,7 @@ class MQ(ttk.Frame):
         else:
             pixformat = " "
         fps = float(1 / float(self.interval_spin.get()))
-        cmd = FFMPEG_BIN + " -i '" + self.moviefile + "'" + pixformat + "-vf fps=" +\
+        cmd = "'"+FFMPEG_BIN + "' -i '" + self.moviefile + "'" + pixformat + "-vf fps=" +\
             str(fps) + " '" + self.outfolder + "'/img%04d." + format + " 2>&1"
         try:
             subprocess.check_call(cmd, shell=True)
