@@ -11,7 +11,10 @@ APP = ['mq.py']
 DATA_FILES = []
 OPTIONS = {
 	'iconfile':'icons/mq.icns',
-        'plist': {'CFBundleShortVersionString':'0.1.0',}
+    'plist': {
+        'CFBundleShortVersionString':'1.0.0',
+        'NSHumanReadableCopyright': u"Copyright © 2017, Fabio Marzocca, All Rights Reserved"
+        }
 }
 
 setup(
